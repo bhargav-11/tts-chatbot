@@ -1,4 +1,10 @@
+import os
+
 import streamlit as st
+
+from chat_utils import generate_qa_chain
+
+openai_api_key = os.getenv("OPENAI_API_KEY")
 
 
 def set_sidebar_width():
@@ -31,7 +37,6 @@ def configure_gpt_model():
     )
 
     return selected_version
-
 
 def save_changes(general_agent_system_message):
     """
@@ -71,7 +76,14 @@ def configure_sidebar():
                                           key="general_agent")
         if uploaded_files:
             for uploaded_file in uploaded_files:
-                st.write("Filename:", uploaded_file.name)
+                
+                documents = [uploaded_file.read().decode()]
+
+                qa_chain = generate_qa_chain(documents)
+                
+
+                if "qa_chain" not in st.session_state:
+                    st.session_state.qa_chain = qa_chain
 
         st.divider()
 

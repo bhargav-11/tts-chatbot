@@ -1,6 +1,6 @@
 import streamlit as st
 
-from chat_utils import chat
+from chat_utils import generate_rag_response
 
 
 def render_chat_interface():
@@ -30,7 +30,7 @@ def render_chat_interface():
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         with st.chat_message("assistant"):
-            response = chat(prompt, use_azure=False)
+            response = generate_rag_response(prompt)
             st.markdown("AI: {}".format(response))
             st.session_state.messages.append({
                 "role":
@@ -38,3 +38,5 @@ def render_chat_interface():
                 "content":
                 "AI: {}".format(response)
             })
+
+
