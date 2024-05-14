@@ -3,6 +3,9 @@ import os
 import streamlit as st
 
 from chat_utils import generate_qa_chain
+from dotenv import load_dotenv
+
+load_dotenv()
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
@@ -72,8 +75,9 @@ def configure_sidebar():
         general_agent_system_message = st.text_area(
             "System message", "Define general agent behavior here.")
         uploaded_files = st.file_uploader("Upload Files",
-                                          accept_multiple_files=True,
-                                          key="general_agent")
+                          accept_multiple_files=True,
+                          type=["txt"],
+                          key="general_agent")
         if uploaded_files:
             for uploaded_file in uploaded_files:
                 

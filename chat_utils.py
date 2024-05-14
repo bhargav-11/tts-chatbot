@@ -2,11 +2,14 @@ import os
 
 import streamlit as st
 from langchain.chains import RetrievalQA
-from langchain.llms import OpenAI as LangChainOpenAI
 from langchain.text_splitter import CharacterTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from openai import AzureOpenAI, OpenAI
+from dotenv import load_dotenv
+from langchain.prompts import PromptTemplate
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+
+load_dotenv()
 
 # Azure OpenAI client
 azure_openai_client = AzureOpenAI(azure_endpoint=os.getenv(
@@ -18,8 +21,8 @@ azure_openai_client = AzureOpenAI(azure_endpoint=os.getenv(
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # LangChain OpenAI client
-langchain_openai_client = LangChainOpenAI(api_key=os.getenv(
-    "OPENAI_API_KEY", ""))
+langchain_openai_client = ChatOpenAI(api_key=os.getenv(
+    "OPENAI_API_KEY", ""), model_name=st.session_state.gpt_version if "gpt_version" in st.session_state else "gpt-3.5-turbo-16k")
 
 
 def chat(prompt, use_azure=True):
@@ -35,24 +38,9 @@ def chat(prompt, use_azure=True):
         str: The response from the API.
     """
 
-    client = azure_openai_client if use_azure else openai_client
-    model = get_model_name(st.session_state.gpt_version)
-    print("Prompt :", prompt)
-    res = client.chat.completions.create(model=model,
-                                         messages=[
-                                             {
-                                                 "role":
-                                                 "system",
-                                                 "content":
-                                                 "You are a helpful assistant."
-                                             },
-                                             {
-                                                 "role": "user",
-                                                 "content": prompt
-                                             },
-                                         ])
-    response = res.choices[0].message.content
-    return response
+    client = azure_openai_client if use_azure else langchain_openai_client
+    response = client.invoke(input=prompt)
+    return response.content
 
 
 def get_model_name(gpt_version):
@@ -80,7 +68,7 @@ def generate_rag_response(query):
     """
    
     if "qa_chain" not in st.session_state:
-        return chat(query,use_azure=False)
+        return chat(query, use_azure=False)
     
     response = st.session_state.qa_chain.run(query)
     return response       
@@ -95,13 +83,34 @@ def generate_qa_chain(documents):
     Returns:
         qa_chain (QAChain): The QA chain.
     """
-    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
+    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=100)
     texts = text_splitter.create_documents(documents)
-    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
+    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"), model="text-embedding-3-small")
 
     db = Chroma.from_documents(texts, embeddings)
-    # Create retriever interface
     retriever = db.as_retriever()
 
-    qa_chain = RetrievalQA.from_chain_type(llm=langchain_openai_client, chain_type='stuff', retriever=retriever)
+    print(st.session_state.general_agent_system_message)
+
+    base_prompt = '''
+    You are a helpful assistant to respond to user queries based on the provided context.
+    '''
+    template = '''
+    {base_prompt}
+
+    {{context}}
+
+    Question: {{question}}
+    Answer:
+    '''.format(base_prompt=st.session_state.general_agent_system_message if "general_agent_system_message" in st.session_state else base_prompt)
+
+    prompt = PromptTemplate(
+        template=template,
+        input_variables=[
+            'context', 
+            'question',
+        ]
+    )
+
+    qa_chain = RetrievalQA.from_llm(llm=langchain_openai_client, retriever=retriever, prompt=prompt)
     return qa_chain
