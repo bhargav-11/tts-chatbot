@@ -2,12 +2,17 @@ import os
 
 import streamlit as st
 from langchain.chains import RetrievalQA
+from langchain.llms import OpenAI as LangChainOpenAI
+from langchain.prompts import ChatPromptTemplate
 from langchain.text_splitter import CharacterTextSplitter
+from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 from openai import AzureOpenAI, OpenAI
+
 from dotenv import load_dotenv
-from langchain.prompts import PromptTemplate
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from constants import context_prompt, system_rag_prompt_template
 
 load_dotenv()
 
@@ -56,6 +61,7 @@ def get_model_name(gpt_version):
     model_mapping = {"3.5": "gpt-3.5-turbo-16k", "4.0": "gpt-4-0125-preview"}
     return model_mapping.get(gpt_version, "gpt-3.5-turbo-16k")
 
+
 def generate_rag_response(query):
     """
     Generate a response using the RAG pipeline.
@@ -66,13 +72,27 @@ def generate_rag_response(query):
     Returns:
         str: The generated response.
     """
-   
-    if "qa_chain" not in st.session_state:
+    
+    if "retriever" not in st.session_state:
         return chat(query, use_azure=False)
-    
-    response = st.session_state.qa_chain.run(query)
-    return response       
-    
+
+    system_prompt_template = st.session_state.general_agent_system_message or system_rag_prompt_template
+
+    prompt = system_prompt_template + context_prompt
+    prompt_template = ChatPromptTemplate.from_template(prompt)
+
+    retriever = st.session_state.retriever
+    rag_chain = ({
+        "context": retriever,
+        "question": RunnablePassthrough()
+    }
+                 | prompt_template
+                 | langchain_openai_client
+                 | StrOutputParser())
+    response = rag_chain.invoke(query)
+    return response
+
+
 def generate_qa_chain(documents):
     """
     Generate qa chain
@@ -83,34 +103,71 @@ def generate_qa_chain(documents):
     Returns:
         qa_chain (QAChain): The QA chain.
     """
-    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=100)
+    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
     texts = text_splitter.create_documents(documents)
     embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"), model="text-embedding-3-small")
 
     db = Chroma.from_documents(texts, embeddings)
-    retriever = db.as_retriever()
+    # Create retriever interface
+    retriever = db.as_retriever(search_kwargs={"k": 4})
 
-    print(st.session_state.general_agent_system_message)
-
-    base_prompt = '''
-    You are a helpful assistant to respond to user queries based on the provided context.
-    '''
-    template = '''
-    {base_prompt}
-
-    {{context}}
-
-    Question: {{question}}
-    Answer:
-    '''.format(base_prompt=st.session_state.general_agent_system_message if "general_agent_system_message" in st.session_state else base_prompt)
-
-    prompt = PromptTemplate(
-        template=template,
-        input_variables=[
-            'context', 
-            'question',
-        ]
-    )
-
-    qa_chain = RetrievalQA.from_llm(llm=langchain_openai_client, retriever=retriever, prompt=prompt)
+    qa_chain = RetrievalQA.from_chain_type(llm=langchain_openai_client,
+                                           chain_type='stuff',
+                                           retriever=retriever)
     return qa_chain
+
+
+def get_retriever_from_documents(documents):
+    """ 
+    Generate retriever from documents
+
+    Args:
+        documents (list): List of documents.
+
+    Returns:
+        retriever (Retriever): The retriever.
+    """
+    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
+    texts = text_splitter.create_documents(documents)
+    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
+
+    db = Chroma.from_documents(texts, embeddings)
+    # Create retriever interface
+    retriever = db.as_retriever(search_kwargs={"k": 4})
+
+    return retriever
+
+def generate_qa_chain_with_custom_prompt(documents):
+    """
+    Generate qa chain
+
+    Args:
+        documents (list): List of documents.
+        system_prompt (str): System prompt.
+
+    Returns:
+        qa_chain (QAChain): The QA chain.
+    """
+    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
+    texts = text_splitter.create_documents(documents)
+    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
+
+    db = Chroma.from_documents(texts, embeddings)
+    # Create retriever interface
+    retriever = db.as_retriever(search_kwargs={"k": 4})
+
+    system_prompt_template = st.session_state.general_agent_system_message or system_rag_prompt_template
+
+    prompt = system_prompt_template + context_prompt
+    prompt_template = ChatPromptTemplate.from_template(prompt)
+
+    retriever = st.session_state.retriever
+    rag_chain = ({
+        "context": retriever,
+        "question": RunnablePassthrough()
+    }
+                 | prompt_template
+                 | langchain_openai_client
+                 | StrOutputParser())
+    
+    return rag_chain
