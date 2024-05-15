@@ -10,6 +10,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from openai import AzureOpenAI, OpenAI
+from langchain_openai import ChatOpenAI
 
 from dotenv import load_dotenv
 from constants import context_prompt, system_rag_prompt_template
