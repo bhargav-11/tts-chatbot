@@ -2,10 +2,7 @@ import os
 
 import streamlit as st
 
-from chat_utils import generate_qa_chain
-from dotenv import load_dotenv
-
-load_dotenv()
+from chat_utils import get_retriever_from_documents
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
@@ -41,6 +38,7 @@ def configure_gpt_model():
 
     return selected_version
 
+
 def save_changes(general_agent_system_message):
     """
     Render a button to save changes and update the GPT model version.
@@ -74,20 +72,19 @@ def configure_sidebar():
         st.subheader("General Agent")
         general_agent_system_message = st.text_area(
             "System message", "Define general agent behavior here.")
+
         uploaded_files = st.file_uploader("Upload Files",
-                          accept_multiple_files=True,
-                          type=["txt"],
-                          key="general_agent")
+                                          accept_multiple_files=True,
+                                          key="general_agent")
         if uploaded_files:
             for uploaded_file in uploaded_files:
-                
+
                 documents = [uploaded_file.read().decode()]
 
-                qa_chain = generate_qa_chain(documents)
-                
+                retriever = get_retriever_from_documents(documents)
 
-                if "qa_chain" not in st.session_state:
-                    st.session_state.qa_chain = qa_chain
+                if "retriever" not in st.session_state:
+                    st.session_state.retriever = retriever
 
         st.divider()
 
