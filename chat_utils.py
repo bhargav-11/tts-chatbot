@@ -11,7 +11,10 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from openai import AzureOpenAI, OpenAI
 
+from dotenv import load_dotenv
 from constants import context_prompt, system_rag_prompt_template
+
+load_dotenv()
 
 # Azure OpenAI client
 azure_openai_client = AzureOpenAI(azure_endpoint=os.getenv(
@@ -23,8 +26,8 @@ azure_openai_client = AzureOpenAI(azure_endpoint=os.getenv(
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # LangChain OpenAI client
-langchain_openai_client = LangChainOpenAI(
-    api_key=os.getenv("OPENAI_API_KEY", ""))
+langchain_openai_client = ChatOpenAI(api_key=os.getenv(
+    "OPENAI_API_KEY", ""), model_name=st.session_state.gpt_version if "gpt_version" in st.session_state else "gpt-3.5-turbo-16k")
 
 
 def chat(prompt, use_azure=True):
@@ -40,23 +43,9 @@ def chat(prompt, use_azure=True):
         str: The response from the API.
     """
 
-    client = azure_openai_client if use_azure else openai_client
-    model = get_model_name(st.session_state.gpt_version)
-    res = client.chat.completions.create(model=model,
-                                         messages=[
-                                             {
-                                                 "role":
-                                                 "system",
-                                                 "content":
-                                                 "You are a helpful assistant."
-                                             },
-                                             {
-                                                 "role": "user",
-                                                 "content": prompt
-                                             },
-                                         ])
-    response = res.choices[0].message.content
-    return response
+    client = azure_openai_client if use_azure else langchain_openai_client
+    response = client.invoke(input=prompt)
+    return response.content
 
 
 def get_model_name(gpt_version):
@@ -116,7 +105,7 @@ def generate_qa_chain(documents):
     """
     text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
     texts = text_splitter.create_documents(documents)
-    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
+    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"), model="text-embedding-3-small")
 
     db = Chroma.from_documents(texts, embeddings)
     # Create retriever interface

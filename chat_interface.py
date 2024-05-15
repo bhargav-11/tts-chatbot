@@ -31,12 +31,12 @@ def render_chat_interface():
 
         with st.chat_message("assistant"):
             response = generate_rag_response(prompt)
-            st.markdown("AI: {}".format(response))
+            st.markdown(response)
             st.session_state.messages.append({
                 "role":
                 "AI",
                 "content":
-                "AI: {}".format(response)
+                response
             })
 
 

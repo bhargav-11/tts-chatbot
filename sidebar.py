@@ -75,6 +75,7 @@ def configure_sidebar():
 
         uploaded_files = st.file_uploader("Upload Files",
                                           accept_multiple_files=True,
+                                          type=["txt"],
                                           key="general_agent")
         if uploaded_files:
             for uploaded_file in uploaded_files:
