@@ -6,7 +6,7 @@ from langchain.llms import OpenAI as LangChainOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_community.vectorstores.faiss import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from openai import AzureOpenAI, OpenAI
@@ -118,7 +118,7 @@ def generate_qa_chain(documents):
     texts = text_splitter.create_documents(documents)
     embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
 
-    db = Chroma.from_documents(texts, embeddings)
+    db = FAISS.from_documents(texts, embeddings)
     # Create retriever interface
     retriever = db.as_retriever(search_kwargs={"k": 4})
 
@@ -142,7 +142,7 @@ def get_retriever_from_documents(documents):
     texts = text_splitter.create_documents(documents)
     embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
 
-    db = Chroma.from_documents(texts, embeddings)
+    db = FAISS.from_documents(texts, embeddings)
     # Create retriever interface
     retriever = db.as_retriever(search_kwargs={"k": 4})
 
@@ -163,7 +163,7 @@ def generate_qa_chain_with_custom_prompt(documents):
     texts = text_splitter.create_documents(documents)
     embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
 
-    db = Chroma.from_documents(texts, embeddings)
+    db = FAISS.from_documents(texts, embeddings)
     # Create retriever interface
     retriever = db.as_retriever(search_kwargs={"k": 4})
 
