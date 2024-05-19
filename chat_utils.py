@@ -1,18 +1,17 @@
 import os
 
 import streamlit as st
+from dotenv import load_dotenv
 from langchain.chains import RetrievalQA
-from langchain.llms import OpenAI as LangChainOpenAI
 from langchain.prompts import ChatPromptTemplate
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
-from openai import AzureOpenAI, OpenAI
 from langchain_openai import ChatOpenAI
+from openai import AzureOpenAI, OpenAI
 
-from dotenv import load_dotenv
 from constants import context_prompt, system_rag_prompt_template
 
 load_dotenv()
@@ -27,8 +26,10 @@ azure_openai_client = AzureOpenAI(azure_endpoint=os.getenv(
 openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # LangChain OpenAI client
-langchain_openai_client = ChatOpenAI(api_key=os.getenv(
-    "OPENAI_API_KEY", ""), model_name=st.session_state.gpt_version if "gpt_version" in st.session_state else "gpt-3.5-turbo-16k")
+langchain_openai_client = ChatOpenAI(
+    api_key=os.getenv("OPENAI_API_KEY", ""),
+    model="gpt-3.5-turbo-16k"
+)
 
 
 def chat(prompt, use_azure=True):
@@ -73,7 +74,10 @@ def generate_rag_response(query):
     Returns:
         str: The generated response.
     """
-    
+    if "user_data" not in st.session_state:
+        print("User data not found in session state.")
+        return chat(query, use_azure=False)
+
     if "retriever" not in st.session_state:
         return chat(query, use_azure=False)
 
@@ -106,7 +110,8 @@ def generate_qa_chain(documents):
     """
     text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
     texts = text_splitter.create_documents(documents)
-    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"), model="text-embedding-3-small")
+    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"),
+                                  model="text-embedding-3-small")
 
     db = Chroma.from_documents(texts, embeddings)
     # Create retriever interface
@@ -137,6 +142,7 @@ def get_retriever_from_documents(documents):
     retriever = db.as_retriever(search_kwargs={"k": 4})
 
     return retriever
+
 
 def generate_qa_chain_with_custom_prompt(documents):
     """
@@ -170,5 +176,5 @@ def generate_qa_chain_with_custom_prompt(documents):
                  | prompt_template
                  | langchain_openai_client
                  | StrOutputParser())
-    
+
     return rag_chain
