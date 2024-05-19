@@ -69,7 +69,6 @@ def render_chat_interface():
             elif st.session_state.validation_stage == 1:
                 with st.chat_message("user"):
                     st.markdown(prompt)
-
                 st.session_state.messages.append({"role":"user","content":prompt})
                     
                 if prompt.lower() == st.session_state.correct_answer.lower():
