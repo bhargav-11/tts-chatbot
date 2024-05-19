@@ -30,10 +30,12 @@ def render_chat_interface():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if "user_data" in st.session_state and not st.session_state.is_user_validated and st.session_state.validation_stage==0:
+    prompt_printed = False
+
+    if "user_data" in st.session_state and not st.session_state.is_user_validated and st.session_state.validation_stage==0 and not prompt_printed:
         with st.chat_message("validation_agent"):
             st.markdown("Please provide your phone number and first name.")
-        st.session_state.messages.append({"role": "validation_agent", "content": "Please provide your phone number and first name."})
+        prompt_printed = True
     
     prompt = st.chat_input("Enter your message:", key="chat_input")
 
@@ -45,9 +47,6 @@ def render_chat_interface():
                         st.markdown("Please upload your data to validate.")
                     st.session_state.messages.append({"role": "validation_agent", "content": "Please upload your data to validate."})
                 else:
-                    with st.chat_message("validation_agent"):
-                        st.markdown("Please provide your phone number and first name.")
-                    st.session_state.messages.append({"role": "validation_agent", "content": "Please provide your phone number and first name."})
                     with st.chat_message("user"):
                         st.markdown(prompt)
                     st.session_state.messages.append({"role": "user", "content": prompt})
