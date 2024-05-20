@@ -6,45 +6,56 @@ from chat_utils import chat
 
 
 def extract_user_info(user_input):
-    # Prepare the prompt for the LLM
-    prompt = f"Extract the phone number and first name from the following user input: '{user_input}'.Provide the answer in the following format: 'Phone Number: 123-456-7890, First Name: John'. If the user input does not contain a phone number or first name, provide an empty string."
+    try:
+        # Prepare the prompt for the LLM
+        prompt = f"Extract the phone number and first name from the following user input: '{user_input}'.Provide the answer in the following format: 'Phone Number: 123-456-7890, First Name: John'. If the user input does not contain a phone number or first name, provide 'no' as the answer."
 
-    # Call the LLM API
-    response = chat(prompt, use_azure=False)
+        # Call the LLM API
+        response = chat(prompt, use_azure=False)
 
-    if response == "" or response is None:
-        return None, None
-    # Parse the LLM response
-    extracted_info = response.strip().split(", ")
-    phone_number = extracted_info[0].split(": ")[1]
-    first_name = extracted_info[1].split(": ")[1]
+        # Return None if the response starts with no
+        if response.lower().startswith("no") or response is None:
+            return None, None
 
-    return phone_number, first_name
+        # Parse the LLM response
+        extracted_info = response.strip().split(", ")
+        phone_number = extracted_info[0].split(": ")[1]
+        first_name = extracted_info[1].split(": ")[1]
+
+        return phone_number, first_name
+    except Exception as e:
+        print("Error extracting user information:", e)
+        return None,None
 
 
 # My name is John and phone number is 555-123-4567
 
 
 def get_security_question(phone_number, first_name, user_data):
-    user = user_data[(user_data['PhoneNumber'] == phone_number)
-                     & (user_data['FirstName'] == first_name)]
+    try:
+       user = user_data[(user_data['PhoneNumber'] == phone_number)
+                        & (user_data['FirstName'] == first_name)]
 
-    if not user.empty:
-        security_questions = {
-            'What is your mother\'s maiden name?':
-            user['MothersMaidenName'].values[0],
-            'What was the name of your first elementary school?':
-            user['FirstElementarySchoolName'].values[0],
-            'What was the name of your first pet?':
-            user['FirstPetName'].values[0]
-        }
+       if not user.empty:
+           security_questions = {
+               'What is your mother\'s maiden name?':
+               user['MothersMaidenName'].values[0],
+               'What was the name of your first elementary school?':
+               user['FirstElementarySchoolName'].values[0],
+               'What was the name of your first pet?':
+               user['FirstPetName'].values[0]
+           }
 
-        question = random.choice(list(security_questions.keys()))
-        answer = security_questions[question]
+           question = random.choice(list(security_questions.keys()))
+           answer = security_questions[question]
 
-        return question, answer
-    else:
-        return None, None
+           return question, answer
+       else:
+           return None, None
+           
+    except Exception as e:
+        print("Error getting security question:", e)
+        return None,None
 
 
 def validate_user(user_data):

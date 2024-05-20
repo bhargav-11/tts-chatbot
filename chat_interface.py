@@ -79,8 +79,8 @@ def render_chat_interface():
                     st.session_state.validation_stage = 0
                 else:
                     with st.chat_message("validation_agent"):
-                        st.markdown("Incorrect answer. Please try again.")
-                    st.session_state.messages.append({"role":"validation_agent","content":"Incorrect answer. Please try again."})
+                        st.markdown("Incorrect answer. Please try again.Provde your phone number and first name.")
+                    st.session_state.messages.append({"role":"validation_agent","content":"Incorrect answer. Please try again.Provde your phone number and first name."})
                     st.session_state.validation_stage = 0
                     
         else:
