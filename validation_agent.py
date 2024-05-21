@@ -25,7 +25,7 @@ def extract_user_info(user_input):
         return phone_number, first_name
     except Exception as e:
         print("Error extracting user information:", e)
-        return None,None
+        return None, None
 
 
 # My name is John and phone number is 555-123-4567
@@ -33,29 +33,29 @@ def extract_user_info(user_input):
 
 def get_security_question(phone_number, first_name, user_data):
     try:
-       user = user_data[(user_data['PhoneNumber'] == phone_number)
-                        & (user_data['FirstName'] == first_name)]
+        user = user_data[(user_data['PhoneNumber'] == phone_number)
+                         & (user_data['FirstName'] == first_name)]
 
-       if not user.empty:
-           security_questions = {
-               'What is your mother\'s maiden name?':
-               user['MothersMaidenName'].values[0],
-               'What was the name of your first elementary school?':
-               user['FirstElementarySchoolName'].values[0],
-               'What was the name of your first pet?':
-               user['FirstPetName'].values[0]
-           }
+        if not user.empty:
+            security_questions = {
+                'What is your mother\'s maiden name?':
+                user['MothersMaidenName'].values[0],
+                'What was the name of your first elementary school?':
+                user['FirstElementarySchoolName'].values[0],
+                'What was the name of your first pet?':
+                user['FirstPetName'].values[0]
+            }
 
-           question = random.choice(list(security_questions.keys()))
-           answer = security_questions[question]
+            question = random.choice(list(security_questions.keys()))
+            answer = security_questions[question]
 
-           return question, answer
-       else:
-           return None, None
-           
+            return question, answer
+        else:
+            return None, None
+
     except Exception as e:
         print("Error getting security question:", e)
-        return None,None
+        return None, None
 
 
 def validate_user(user_data):
