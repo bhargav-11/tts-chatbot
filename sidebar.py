@@ -1,5 +1,6 @@
 import os
 
+import pandas as pd
 import streamlit as st
 
 from chat_utils import get_retriever_from_documents
@@ -39,12 +40,15 @@ def configure_gpt_model():
     return selected_version
 
 
-def save_changes(general_agent_system_message):
+def save_changes(general_agent_system_message,validation_agent_system_message):
     """
     Render a button to save changes and update the GPT model version.
     """
     if "general_agent_system_message" not in st.session_state:
         st.session_state.general_agent_system_message = general_agent_system_message
+
+    if "validation_agent_system_message" not in st.session_state:
+        st.session_state.validation_agent_system_message = validation_agent_system_message
 
     col1, col2 = st.columns(2)
 
@@ -57,6 +61,7 @@ def save_changes(general_agent_system_message):
         if st.button("Save Changes"):
             st.session_state.gpt_version = selected_version
             st.session_state.general_agent_system_message = general_agent_system_message
+            st.session_state.validation_agent_system_message = validation_agent_system_message
 
             st.success("Changes saved!")
 
@@ -90,13 +95,16 @@ def configure_sidebar():
         st.divider()
 
         st.subheader("Validation Agent")
-        st.text_area("System message", "Define validation behavior here.")
+        validation_agent_system_message=st.text_area("System message", "Define validation behavior here.")
         uploaded_files = st.file_uploader("Upload Files",
                                           accept_multiple_files=True,
                                           key="validation_agent")
         if uploaded_files:
             for uploaded_file in uploaded_files:
-                st.write("Filename:", uploaded_file.name)
+                st.write("Filename is:", uploaded_file.name)
+                user_data = pd.read_csv(uploaded_file)
+
+                st.session_state.user_data = user_data
 
         st.divider()
 
@@ -111,4 +119,4 @@ def configure_sidebar():
 
         st.divider()
 
-        save_changes(general_agent_system_message)
+        save_changes(general_agent_system_message,validation_agent_system_message)
