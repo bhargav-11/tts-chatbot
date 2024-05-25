@@ -1,4 +1,5 @@
 context_prompt = """
+Keep the answer short and precise.
 Question: {question}
 Context: {context}
 """

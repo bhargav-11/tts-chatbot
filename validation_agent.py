@@ -71,12 +71,9 @@ def validate_user(user_data):
         })
         phone_number, first_name = extract_user_info(user_input)
 
-        print("Phone number:", phone_number, "\n\n", "First Name:", first_name)
         selected_question, correct_answer = get_security_question(
             phone_number, first_name, user_data)
-
-        print("Security Questions:", selected_question, "\n\n", "Answer:",
-              correct_answer, "\n\n\n")
+        
         if selected_question:
             with st.chat_message("validation_agent"):
                 st.markdown(f"Security Question: {selected_question}")
