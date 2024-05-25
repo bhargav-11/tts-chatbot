@@ -28,7 +28,10 @@ def render_chat_interface():
             # st.audio(audio.export().read())
             audio.export("audio.wav", format="wav")
             transcribed_text = convert_audio_to_text("audio.wav")
-            st.session_state.transcribed_text = transcribed_text
+            if transcribed_text == st.session_state.transcribed_text:
+                st.session_state.transcribed_text = ""
+            else:
+                st.session_state.transcribed_text = transcribed_text
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -52,14 +55,12 @@ def render_chat_interface():
 
     prompt = st.chat_input("Enter your message:", key="chat_input")
 
-    default_chat_input_value = st.session_state.transcribed_text
     js = f"""
         <script>
             function insertText(dummy_var_to_force_repeat_execution) {{
-                console.log("dummy_var_to_force_repeat_execution:", dummy_var_to_force_repeat_execution);
                 var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
                 var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
-                nativeInputValueSetter.call(chatInput, "{default_chat_input_value}");
+                nativeInputValueSetter.call(chatInput, "{st.session_state.transcribed_text}");
                 var event = new Event('input', {{ bubbles: true}});
                 chatInput.dispatchEvent(event);
             }}
@@ -175,5 +176,6 @@ def render_chat_interface():
                     "role": "AI",
                     "content": response
                 })
-                
-        st.session_state.transcribed_text =""
+        
+
+            
