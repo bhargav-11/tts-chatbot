@@ -125,7 +125,7 @@ def render_chat_interface():
             insertText({len(st.session_state.messages)});
         </script>
         """
-    st.components.v1.html(js, height=0)
+    
 
     if prompt:
         if not st.session_state.is_user_validated:
@@ -136,5 +136,6 @@ def render_chat_interface():
         else:
             handle_user_validated(prompt)
         
-
-            
+        st.session_state.transcribed_text =""
+        
+    st.components.v1.html(js, height=0)
