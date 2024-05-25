@@ -3,6 +3,7 @@ import os
 import pandas as pd
 import streamlit as st
 
+from chat_interface import prompt_user_for_phone_and_name
 from chat_utils import get_retriever_from_documents
 
 openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -70,6 +71,8 @@ def configure_sidebar():
     """
     Render the sidebar with agent configuration options.
     """
+    if "prompt_user_for_phone_and_name" not in st.session_state:
+        st.session_state.prompt_user_for_phone_and_name = False
     with st.sidebar:
         st.header("Agent Configuration")
         st.divider()
@@ -105,6 +108,9 @@ def configure_sidebar():
                 user_data = pd.read_csv(uploaded_file)
 
                 st.session_state.user_data = user_data
+                if not st.session_state.prompt_user_for_phone_and_name:
+                    prompt_user_for_phone_and_name()
+                    st.session_state.prompt_user_for_phone_and_name=True
 
         st.divider()
 

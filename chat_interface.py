@@ -36,13 +36,11 @@ def prompt_user_for_data():
 
 def prompt_user_for_phone_and_name():
     send_chat_message("validation_agent", "Please provide your phone number and first name.")
-    st.session_state.prompt_user_for_phone_and_name=True
 
 def handle_validation_stage_0(prompt):
     if "user_data" not in st.session_state:
         prompt_user_for_data()
     else:
-        prompt_user_for_phone_and_name()
         send_chat_message("user", prompt)
 
         phone_number, first_name = extract_user_info(prompt)
@@ -83,9 +81,6 @@ def render_chat_interface():
     if "is_user_validated" not in st.session_state:
         st.session_state.is_user_validated = False
 
-    if "prompt_user_for_phone_and_name" not in st.session_state:
-        st.session_state.prompt_user_for_phone_and_name= False
-
     if "validation_stage" not in st.session_state:
         st.session_state.validation_stage = 0
 
@@ -96,7 +91,6 @@ def render_chat_interface():
         audio = audiorecorder("Start", "Stop")
 
         if len(audio) > 0:
-            # st.audio(audio.export().read())
             audio.export("audio.wav", format="wav")
             transcribed_text = convert_audio_to_text("audio.wav")
             if transcribed_text == st.session_state.transcribed_text:
@@ -116,13 +110,6 @@ def render_chat_interface():
             st.markdown(message["content"])
             if message["audio_file_name"]:
                 st.audio(message["audio_file_name"])
-
-    if "user_data" in st.session_state and not st.session_state.is_user_validated and st.session_state.validation_stage == 0 and not st.session_state.prompt_user_for_phone_and_name :
-        with st.chat_message("validation_agent"):
-            st.markdown("Please provide your phone number and first name.")
-        
-        add_message("validation_agent","Please provide your phone number and first name")
-        st.session_state.prompt_user_for_phone_and_name= True
 
     prompt = st.chat_input("Enter your message:", key="chat_input")
 
