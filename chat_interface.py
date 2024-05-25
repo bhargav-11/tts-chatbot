@@ -1,4 +1,5 @@
 import streamlit as st
+import base64
 from audiorecorder import audiorecorder
 
 from audio_utils import convert_audio_to_text, convert_text_to_audio
@@ -26,7 +27,23 @@ def send_chat_message(role, content):
     with st.chat_message(role):
         st.markdown(content)
         if audio_file_name:
-                st.audio(audio_file_name)
+            st.audio(audio_file_name)
+            audio_file = open(audio_file_name, 'rb')
+            audio_bytes = audio_file.read()
+
+            # Encode the audio file as base64
+            audio_base64 = base64.b64encode(audio_bytes).decode()
+
+            # Create the HTML audio element with autoplay
+            html = f"""
+            <audio autoplay>
+              <source src="data:audio/wav;base64,{audio_base64}" type="audio/wav">
+            Your browser does not support the audio element.
+            </audio>
+            """
+
+            # Display the audio player
+            st.markdown(html, unsafe_allow_html=True)
         
 
 
