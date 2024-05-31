@@ -3,7 +3,7 @@ import base64
 from audiorecorder import audiorecorder
 
 from audio_utils import convert_audio_to_text, convert_text_to_audio
-from chat_utils import generate_rag_response
+from chat_utils import generate_personal_agent_response, generate_rag_response
 from constants import GREETING_MESSAGE
 from file_utils import remove_all_files_in_folder
 from router_agent import router_agent
@@ -73,10 +73,9 @@ def handle_general_agent(prompt):
     response = generate_rag_response(prompt)
     send_chat_message("assistant", response)
 
-# TO-DO Implement Personal concierge Agent
-def handle_personal_concierge_agent(prompt):
-    print("Inside the handle personal concierge agent")
-
+def handle_personal_concierge_agent(query):
+    response = generate_personal_agent_response(query)
+    send_chat_message("assistant", response)
 
 def render_chat_interface():
     """

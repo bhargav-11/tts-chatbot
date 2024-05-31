@@ -23,6 +23,17 @@ Context : {context}
 
 Answer:
 """
+personal_agent_with_user_data = """
+You are given a question and user data.
+Your task is to find answer based on the user data.
+Understand the question and think step by step and provide answer to the question.
+
+Question : {question}
+User data: {user_data}
+
+Answer:
+"""
+
 
 system_rag_prompt_template = """ 
 You are an assistant for question answering. You are given a question 
