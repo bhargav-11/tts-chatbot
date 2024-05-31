@@ -74,17 +74,12 @@ def generate_rag_response(query):
     Returns:
         str: The generated response.
     """
-    if "user_data" not in st.session_state:
-        print("User data not found in session state.")
-        return chat(query, use_azure=False)
-
     if "retriever" not in st.session_state:
         return chat(query, use_azure=False)
 
     system_prompt_template = st.session_state.general_agent_system_message or system_rag_prompt_template
 
-    prompt = system_prompt_template + context_prompt
-    prompt_template = ChatPromptTemplate.from_template(prompt)
+    prompt_template = ChatPromptTemplate.from_template(context_prompt, system_prompt=system_prompt_template)
 
     retriever = st.session_state.retriever
     rag_chain = ({
@@ -98,31 +93,6 @@ def generate_rag_response(query):
     return response
 
 
-def generate_qa_chain(documents):
-    """
-    Generate qa chain
-
-    Args:
-        documents (list): List of documents.
-
-    Returns:
-        qa_chain (QAChain): The QA chain.
-    """
-    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
-    texts = text_splitter.create_documents(documents)
-    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"),
-                                  model="text-embedding-3-small")
-
-    db = Chroma.from_documents(texts, embeddings)
-    # Create retriever interface
-    retriever = db.as_retriever(search_kwargs={"k": 4})
-
-    qa_chain = RetrievalQA.from_chain_type(llm=langchain_openai_client,
-                                           chain_type='stuff',
-                                           retriever=retriever)
-    return qa_chain
-
-
 def get_retriever_from_documents(documents):
     """ 
     Generate retriever from documents
@@ -133,7 +103,7 @@ def get_retriever_from_documents(documents):
     Returns:
         retriever (Retriever): The retriever.
     """
-    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
+    text_splitter = CharacterTextSplitter(chunk_size=200, chunk_overlap=0)
     texts = text_splitter.create_documents(documents)
     embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
 
