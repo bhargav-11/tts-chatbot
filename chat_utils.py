@@ -12,7 +12,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI
 from openai import AzureOpenAI, OpenAI
 
-from constants import context_prompt, system_rag_prompt_template
+from constants import general_agent_rag_prompt, system_rag_prompt_template
 
 load_dotenv()
 
@@ -79,7 +79,7 @@ def generate_rag_response(query):
 
     system_prompt_template = st.session_state.general_agent_system_message or system_rag_prompt_template
 
-    prompt_template = ChatPromptTemplate.from_template(context_prompt, system_prompt=system_prompt_template)
+    prompt_template = ChatPromptTemplate.from_template(general_agent_rag_prompt, system_prompt=system_prompt_template)
 
     retriever = st.session_state.retriever
     rag_chain = ({
@@ -112,39 +112,3 @@ def get_retriever_from_documents(documents):
     retriever = db.as_retriever(search_kwargs={"k": 4})
 
     return retriever
-
-
-def generate_qa_chain_with_custom_prompt(documents):
-    """
-    Generate qa chain
-
-    Args:
-        documents (list): List of documents.
-        system_prompt (str): System prompt.
-
-    Returns:
-        qa_chain (QAChain): The QA chain.
-    """
-    text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=0)
-    texts = text_splitter.create_documents(documents)
-    embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
-
-    db = Chroma.from_documents(texts, embeddings)
-    # Create retriever interface
-    retriever = db.as_retriever(search_kwargs={"k": 4})
-
-    system_prompt_template = st.session_state.general_agent_system_message or system_rag_prompt_template
-
-    prompt = system_prompt_template + context_prompt
-    prompt_template = ChatPromptTemplate.from_template(prompt)
-
-    retriever = st.session_state.retriever
-    rag_chain = ({
-        "context": retriever,
-        "question": RunnablePassthrough()
-    }
-                 | prompt_template
-                 | langchain_openai_client
-                 | StrOutputParser())
-
-    return rag_chain
