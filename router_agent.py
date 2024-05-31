@@ -13,7 +13,7 @@ generic_prompt = """
 You are an AI assistant that determines which specialized agent should handle a given user query. The available agents are:
 
 general_agent: This agent handles generic queries.
-personal_concierge_agent: This agent handles queries related to a user's personal account details, for example orders and purchase history.
+personal_concierge_agent: This agent handles queries related to a user's personal details or personal account details, for example orders and purchase history.
 
 Your task is to analyze the input query and output the name of the agent that should handle it, formatted as:
 

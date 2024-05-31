@@ -28,7 +28,17 @@ def extract_user_info(user_input):
         return None, None
 
 
-# My name is John and phone number is 555-123-4567
+# My name is Sofia and phone number is 555-369-2580
+
+def get_user_related_data_in_json(user_transactional_data):
+    try:
+        user_id =st.session_state.user_id
+        user_data = user_transactional_data[user_transactional_data['UserID'] == user_id]
+        user_data_json = user_data.to_json(orient='records')
+        return user_data_json
+    except Exception as e:
+        print("Error occured while getting user data",e)
+        return None
 
 
 def get_security_question(phone_number, first_name, user_data):
