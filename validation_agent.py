@@ -37,6 +37,7 @@ def get_security_question(phone_number, first_name, user_data):
                          & (user_data['FirstName'] == first_name)]
 
         if not user.empty:
+            
             security_questions = {
                 'What is your mother\'s maiden name?':
                 user['MothersMaidenName'].values[0],
@@ -48,10 +49,10 @@ def get_security_question(phone_number, first_name, user_data):
 
             question = random.choice(list(security_questions.keys()))
             answer = security_questions[question]
-
-            return question, answer
+            user_id = user['ID'].values[0]
+            return question, answer,user_id
         else:
-            return None, None
+            return None, None ,None
 
     except Exception as e:
         print("Error getting security question:", e)
