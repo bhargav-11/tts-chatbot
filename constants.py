@@ -42,5 +42,5 @@ Your task is to find the most relevant document that answers
 """
 
 GREETING_MESSAGE = """
-Hello , How can I help you?
+Hello There, Greetings! I am an AI assistant. I am here to help you with your queries.
 """
