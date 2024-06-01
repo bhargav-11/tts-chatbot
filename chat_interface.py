@@ -140,6 +140,7 @@ def render_chat_interface():
         </script>
         """
 
+    send_chat_message("assistant",GREETING_MESSAGE)
     if prompt:
         send_chat_message("user", prompt)
         
