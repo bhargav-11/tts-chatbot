@@ -97,6 +97,9 @@ def render_chat_interface():
     
     if "user_id" not in st.session_state:
         st.session_state.user_id = None
+    
+    if "prompt_greeting_message" not in st.session_state:
+        st.session_state.prompt_greeting_message = False
 
     col1, col2 = st.columns(2, gap="large")
     with col1:
@@ -139,8 +142,9 @@ def render_chat_interface():
             insertText({len(st.session_state.messages)});
         </script>
         """
-
-    send_chat_message("assistant",GREETING_MESSAGE)
+    if not st.session_state.prompt_greeting_message:
+        send_chat_message("assistant",GREETING_MESSAGE)
+        st.session_state.prompt_greeting_message=True
     if prompt:
         send_chat_message("user", prompt)
         
