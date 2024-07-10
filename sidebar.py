@@ -105,6 +105,7 @@ def configure_sidebar():
                 user_data = pd.read_csv(uploaded_file)
 
                 st.session_state.user_data = user_data
+                
 
         st.divider()
 
