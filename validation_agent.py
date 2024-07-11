@@ -56,7 +56,7 @@ def get_security_question(phone_number, first_name, user_data):
 
     except Exception as e:
         print("Error getting security question:", e)
-        return None, None
+        return None, None,None
 
 
 def validate_user(user_data):
