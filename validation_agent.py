@@ -28,7 +28,7 @@ def extract_user_info(user_input):
         return None, None
 
 
-# My name is John and phone number is 555-123-4567
+# My name is Sofia and phone number is 555-369-2580
 
 
 def get_security_question(phone_number, first_name, user_data):
@@ -37,6 +37,7 @@ def get_security_question(phone_number, first_name, user_data):
                          & (user_data['FirstName'] == first_name)]
 
         if not user.empty:
+            
             security_questions = {
                 'What is your mother\'s maiden name?':
                 user['MothersMaidenName'].values[0],
@@ -48,14 +49,14 @@ def get_security_question(phone_number, first_name, user_data):
 
             question = random.choice(list(security_questions.keys()))
             answer = security_questions[question]
-
-            return question, answer
+            user_id = user['ID'].values[0]
+            return question, answer,user_id
         else:
-            return None, None
+            return None, None ,None
 
     except Exception as e:
         print("Error getting security question:", e)
-        return None, None
+        return None, None,None
 
 
 def validate_user(user_data):
