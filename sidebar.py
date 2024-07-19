@@ -29,12 +29,12 @@ def configure_gpt_model():
     Render a dropdown to select the GPT model version.
     """
     if "gpt_version" not in st.session_state:
-        st.session_state.gpt_version = "3.5"  # Set a default value
+        st.session_state.gpt_version = "4.0"  # Set a default value
 
     selected_version = st.selectbox(
         "Choose GPT Model",
-        ["3.5", "4.0"],
-        index=["3.5", "4.0"].index(st.session_state.gpt_version),
+        [ "4.0","3.5"],
+        index=["4.0","3.5"].index(st.session_state.gpt_version),
     )
 
     return selected_version

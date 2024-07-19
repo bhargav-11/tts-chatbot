@@ -1,6 +1,4 @@
 import os
-import re
-import json
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -29,7 +27,7 @@ openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # LangChain OpenAI client
 langchain_openai_client = ChatOpenAI(
     api_key=os.getenv("OPENAI_API_KEY", ""),
-    model="gpt-3.5-turbo-16k",
+    model="gpt-4o",
     verbose=True
 )
 
@@ -62,9 +60,12 @@ def get_model_name(gpt_version):
     Retruns:
         str: The model name.
     """
-    model_mapping = {"3.5": "gpt-3.5-turbo-16k", "4.0": "gpt-4-0125-preview"}
+    model_mapping = { "4.0": "gpt-4o","3.5": "gpt-3.5-turbo-16k"}
     return model_mapping.get(gpt_version, "gpt-3.5-turbo-16k")
 
+
+def format_docs(docs):
+    return "\n\n".join(doc.page_content for doc in docs)
 
 def generate_rag_response(query):
     """
@@ -81,17 +82,22 @@ def generate_rag_response(query):
 
     system_prompt_template = st.session_state.general_agent_system_message or system_rag_prompt_template
 
-    prompt_template = ChatPromptTemplate.from_template(general_agent_rag_prompt, system_prompt=system_prompt_template)
-
+    prompt_template = ChatPromptTemplate.from_messages([
+        ("system",system_prompt_template),
+        ("human", general_agent_rag_prompt),
+        ("ai", "Answer: ")
+    ])
     retriever = st.session_state.retriever
+
     rag_chain = ({
-        "context": retriever ,
+        "context": retriever | format_docs ,
         "question": RunnablePassthrough()
     }
                  | prompt_template
                  | langchain_openai_client
                  | StrOutputParser())
     response = rag_chain.invoke(query)
+    
     return response
 
 
@@ -114,7 +120,11 @@ def generate_personal_agent_response(query):
 
     prompt_with_user_data = personal_agent_rag_prompt.format(user_data=user_data,question="{question}",context="{context}")
 
-    prompt_template = ChatPromptTemplate.from_template(prompt_with_user_data, system_prompt=system_prompt_template)
+    prompt_template = ChatPromptTemplate.from_messages([
+        ("system",system_prompt_template),
+        ("human", prompt_with_user_data),
+        ("ai", "Answer: ")
+    ])
     personal_agent_retriever = st.session_state.personal_agent_retriever
     rag_chain = ({
         "context": personal_agent_retriever,
@@ -136,7 +146,7 @@ def get_retriever_from_documents(documents):
     Returns:
         retriever (Retriever): The retriever.
     """
-    text_splitter = CharacterTextSplitter(chunk_size=200, chunk_overlap=0)
+    text_splitter = CharacterTextSplitter(chunk_size=100, chunk_overlap=50)
     texts = text_splitter.create_documents(documents)
     embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
 

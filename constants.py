@@ -6,7 +6,7 @@ Your answers should revolve around the provided context.
 If the user greets you in their question, start your answer with a greeting as well.
 If inquired about capabilities or background information, give a general brief overview derived from the context.
 Question: {question}
-Context: {context}
+Context: \n\n {context}
 
 Answer:
 """
