@@ -60,14 +60,27 @@ def handle_validation_stage_0(prompt):
             st.session_state.validation_stage = 0
 
 def handle_validation_stage_1(prompt):
+    if 'validation_attempts' not in st.session_state:
+        st.session_state.validation_attempts = 0
+
+    max_attempts = 3
 
     if prompt.lower() == st.session_state.correct_answer.lower():
         send_chat_message("assistant", "Validation successful! You can now chat with the assistant.")
         st.session_state.is_user_validated = True
         st.session_state.validation_stage = 0
+        st.session_state.validation_attempts = 0  # Reset attempts
     else:
-        send_chat_message("assistant", "Incorrect answer. Please try again. Provide your phone number and first name.")
-        st.session_state.validation_stage = 0
+        st.session_state.validation_attempts += 1
+        
+        if st.session_state.validation_attempts < max_attempts:
+            remaining_attempts = max_attempts - st.session_state.validation_attempts
+            send_chat_message("assistant", f"Incorrect answer. You have {remaining_attempts} {'attempts' if remaining_attempts > 1 else 'attempt'} left. Please try again.")
+            st.session_state.validation_stage = 1  # Keep in validation stage
+        else:
+            send_chat_message("assistant", "Maximum attempts reached. Validation failed. Please start over with your phone number and first name.")
+            st.session_state.validation_stage = 0
+            st.session_state.validation_attempts = 0  # Reset attempts
 
 def handle_general_agent(prompt):
     response = generate_rag_response(prompt)
