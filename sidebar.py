@@ -29,15 +29,13 @@ def configure_gpt_model():
     Render a dropdown to select the GPT model version.
     """
     if "gpt_version" not in st.session_state:
-        st.session_state.gpt_version = "4.0"  # Set a default value
+        st.session_state.gpt_version = "4o"
 
-    selected_version = st.selectbox(
-        "Choose GPT Model",
-        [ "4.0","3.5"],
-        index=["4.0","3.5"].index(st.session_state.gpt_version),
-    )
-
-    return selected_version
+    st.selectbox(
+            label="Choose LLM provider",
+            options=("4o","4o-mini"),
+            key="gpt_version"
+        )
 
 
 def save_changes(general_agent_system_message,validation_agent_system_message,personal_agent_system_message):
@@ -59,13 +57,12 @@ def save_changes(general_agent_system_message,validation_agent_system_message,pe
     col1, col2 = st.columns(2)
 
     with col1:
-        selected_version = configure_gpt_model()
+        configure_gpt_model()
 
     with col2:
         vert_space = '<div style="padding: 14px 10px;"></div>'
         st.markdown(vert_space, unsafe_allow_html=True)
         if st.button("Save Changes"):
-            st.session_state.gpt_version = selected_version
             st.session_state.general_agent_system_message = general_agent_system_message
             st.session_state.validation_agent_system_message = validation_agent_system_message
 
