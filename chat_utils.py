@@ -31,6 +31,20 @@ langchain_openai_client = ChatOpenAI(
     verbose=True
 )
 
+def get_openai_client(gpt_version="4o"):
+
+    model_name = "gpt-4o"
+
+    if gpt_version == "4o-mini":
+        model_name = "gpt-4o-mini"
+        
+    return ChatOpenAI(
+                api_key=os.getenv("OPENAI_API_KEY", ""),
+                model=model_name,
+                verbose=True
+            )
+    
+
 
 def chat(prompt, use_azure=True):
     """
@@ -48,21 +62,6 @@ def chat(prompt, use_azure=True):
     client = azure_openai_client if use_azure else langchain_openai_client
     response = client.invoke(input=prompt)
     return response.content
-
-
-def get_model_name(gpt_version):
-    """
-    Get the model name for the specified GPT version.
-
-    Args:
-        gpt_version (str): The GPT version.
-
-    Retruns:
-        str: The model name.
-    """
-    model_mapping = { "4.0": "gpt-4o","3.5": "gpt-3.5-turbo-16k"}
-    return model_mapping.get(gpt_version, "gpt-3.5-turbo-16k")
-
 
 def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
@@ -89,12 +88,15 @@ def generate_rag_response(query):
     ])
     retriever = st.session_state.retriever
 
+
+    llm_client = get_openai_client(st.session_state.gpt_version)
+
     rag_chain = ({
         "context": retriever | format_docs ,
         "question": RunnablePassthrough()
     }
                  | prompt_template
-                 | langchain_openai_client
+                 | llm_client
                  | StrOutputParser())
     response = rag_chain.invoke(query)
     
@@ -126,12 +128,15 @@ def generate_personal_agent_response(query):
         ("ai", "Answer: ")
     ])
     personal_agent_retriever = st.session_state.personal_agent_retriever
+
+    llm_client = get_openai_client(st.session_state.gpt_version)
+
     rag_chain = ({
         "context": personal_agent_retriever,
         "question": RunnablePassthrough(),
     }
                  | prompt_template
-                 | langchain_openai_client
+                 | llm_client
                  | StrOutputParser())
     response = rag_chain.invoke(query)
     return response
