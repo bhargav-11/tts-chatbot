@@ -22,7 +22,7 @@ def extract_user_info(user_input):
         phone_number = extracted_info[0].split(": ")[1]
         first_name = extracted_info[1].split(": ")[1]
 
-        return phone_number, first_name
+        return phone_number, first_name.lower()
     except Exception as e:
         print("Error extracting user information:", e)
         return None, None
@@ -34,7 +34,7 @@ def extract_user_info(user_input):
 def get_security_question(phone_number, first_name, user_data):
     try:
         user = user_data[(user_data['PhoneNumber'] == phone_number)
-                         & (user_data['FirstName'] == first_name)]
+                       & (user_data['FirstName'].str.lower() == first_name)]
 
         if not user.empty:
             
