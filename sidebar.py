@@ -38,22 +38,10 @@ def configure_gpt_model():
         )
 
 
-def save_changes(general_agent_system_message,validation_agent_system_message,personal_agent_system_message):
+def save_changes():
     """
     Render a button to save changes and update the GPT model version.
     """
-    if "general_agent_system_message" not in st.session_state:
-        st.session_state.general_agent_system_message = general_agent_system_message
-
-    if "validation_agent_system_message" not in st.session_state:
-        st.session_state.validation_agent_system_message = validation_agent_system_message
-
-    if "personal_agent_system_message" not in st.session_state:
-        st.session_state.personal_agent_system_message = personal_agent_system_message
-
-    st.session_state.general_agent_system_message = general_agent_system_message
-    st.session_state.personal_agent_system_message = personal_agent_system_message
-
     col1, col2 = st.columns(2)
 
     with col1:
@@ -63,9 +51,6 @@ def save_changes(general_agent_system_message,validation_agent_system_message,pe
         vert_space = '<div style="padding: 14px 10px;"></div>'
         st.markdown(vert_space, unsafe_allow_html=True)
         if st.button("Save Changes"):
-            st.session_state.general_agent_system_message = general_agent_system_message
-            st.session_state.validation_agent_system_message = validation_agent_system_message
-
             st.success("Changes saved!")
 
 
@@ -78,8 +63,9 @@ def configure_sidebar():
         st.divider()
 
         st.subheader("General Agent")
-        general_agent_system_message = st.text_area(
-            "System message", "Define general agent behavior here.")
+        
+        st.text_area(
+            "System message", "",key="general_agent_system_message")
 
         uploaded_files = st.file_uploader("Upload Files",
                                           accept_multiple_files=True,
@@ -98,7 +84,7 @@ def configure_sidebar():
         st.divider()
 
         st.subheader("Validation Agent")
-        validation_agent_system_message=st.text_area("System message", "Define validation behavior here.")
+        st.text_area("System message", "",key="validation_agent_system_message")
         uploaded_files = st.file_uploader("Upload Files",
                                           accept_multiple_files=True,
                                           key="validation_agent")
@@ -113,7 +99,7 @@ def configure_sidebar():
         st.divider()
 
         st.subheader("Personal Concierge Agent")
-        personal_agent_system_message= st.text_area("System message", "Define personal agent behavior here.")
+        st.text_area("System message", "",key="personal_agent_system_message")
         uploaded_files = st.file_uploader("Upload Files",
                                           accept_multiple_files=True,
                                           key="personal_agent")
@@ -132,4 +118,4 @@ def configure_sidebar():
 
         st.divider()
 
-        save_changes(general_agent_system_message,validation_agent_system_message,personal_agent_system_message)
+        save_changes()

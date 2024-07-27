@@ -11,7 +11,7 @@ from langchain_core.runnables import RunnablePassthrough
 from langchain_openai import ChatOpenAI
 from openai import AzureOpenAI, OpenAI
 
-from constants import general_agent_rag_prompt, system_rag_prompt_template,personal_agent_rag_prompt,personal_agent_with_user_data
+from constants import general_agent_rag_prompt, system_rag_prompt_template,personal_agent_rag_prompt,personal_agent_with_user_data,default_system_prompt
 
 load_dotenv()
 
@@ -113,23 +113,26 @@ def generate_personal_agent_response(query):
         user_data_json = get_user_related_data_in_json(st.session_state.user_transactional_data)
         user_data = json_to_str(user_data_json)
 
+    system_prompt_template = st.session_state.personal_agent_system_message or default_system_prompt
+
     if "personal_agent_retriever" not in st.session_state:
-        prompt_with_user_data = personal_agent_with_user_data.format(question=query, user_data=user_data)
+        prompt_with_user_data = system_prompt_template + "\n\n" + personal_agent_with_user_data.format(question=query, user_data=user_data)
         response = chat(prompt_with_user_data, use_azure=False)
         return response
 
-    system_prompt_template =st.session_state.personal_agent_system_message
+    
 
     prompt_with_user_data = personal_agent_rag_prompt.format(user_data=user_data,question="{question}",context="{context}")
 
     prompt_template = ChatPromptTemplate.from_messages([
         ("system",system_prompt_template),
         ("human", prompt_with_user_data),
-        ("ai", "Answer: ")
     ])
+
     personal_agent_retriever = st.session_state.personal_agent_retriever
 
     llm_client = get_openai_client(st.session_state.gpt_version)
+    
 
     rag_chain = ({
         "context": personal_agent_retriever,
@@ -156,8 +159,9 @@ def get_retriever_from_documents(documents):
     embeddings = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
 
     db = Chroma.from_documents(texts, embeddings)
+
     # Create retriever interface
-    retriever = db.as_retriever(search_kwargs={"k": 4})
+    retriever = db.as_retriever(search_kwargs={"k": 5})
 
     return retriever
 
