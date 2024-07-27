@@ -9,7 +9,6 @@ from file_utils import remove_all_files_in_folder
 from router_agent import router_agent
 from validation_agent import extract_user_info, get_security_question
 
-
 def add_message(role, content,audio_file_name=None):
     st.session_state.messages.append({
         "role": role,
@@ -66,7 +65,7 @@ def handle_validation_stage_1(prompt):
     max_attempts = 3
 
     if prompt.lower() == st.session_state.correct_answer.lower():
-        send_chat_message("assistant", "Validation successful! You can now chat with the assistant.")
+        send_chat_message("assistant", "Thanks for validating your identity. How can I help?")
         st.session_state.is_user_validated = True
         st.session_state.validation_stage = 0
         st.session_state.validation_attempts = 0  # Reset attempts
@@ -89,6 +88,14 @@ def handle_general_agent(prompt):
 def handle_personal_concierge_agent(query):
     response = generate_personal_agent_response(query)
     send_chat_message("assistant", response)
+
+def clear_and_reset_all_session_state():
+    st.session_state.transcribed_text = ""
+    st.session_state.is_user_validated = False
+    st.session_state.validation_stage = 0
+    st.session_state.prompt_user_for_phone_and_name = False
+    st.session_state.user_validation_invoked =False
+    st.session_state.user_id = None
 
 def render_chat_interface():
     """
@@ -134,6 +141,7 @@ def render_chat_interface():
     if clear_button:
         st.session_state.messages = []
         remove_all_files_in_folder("audio")
+        clear_and_reset_all_session_state()
 
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
