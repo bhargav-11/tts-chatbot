@@ -30,6 +30,29 @@ def extract_user_info(user_input):
 
 # My name is Sofia and phone number is 555-369-2580
 
+def get_security_question_using_id(user_id,user_data):
+    try:
+        user = user_data[(user_data['ID'] ==user_id)]
+        if not user.empty:
+            security_questions = {
+                'What is your mother\'s maiden name?':
+                user['MothersMaidenName'].values[0],
+                'What was the name of your first elementary school?':
+                user['FirstElementarySchoolName'].values[0],
+                'What was the name of your first pet?':
+                user['FirstPetName'].values[0]
+            }
+
+            question = random.choice(list(security_questions.keys()))
+            answer = security_questions[question]
+
+            return question, answer
+        else:
+            return None,None
+    except Exception as e:
+        print("Error getting security question:", e)
+        return None, None
+
 
 def get_security_question(phone_number, first_name, user_data):
     try:
@@ -85,10 +108,10 @@ def validate_security_question(security_question_correct_answer,user_answer_for_
         
         parts = response.split(',')
         match_result = parts[0].strip()
-        max_attempts = int(parts[1].strip()) if len(parts) > 1 else None
+        max_attempts = parts[1].strip() if len(parts) > 1 else None
 
-        if max_attempts:
-            st.session_state.max_attempts =max_attempts
+        if max_attempts and max_attempts != 'Not specified' :
+            st.session_state.max_attempts =int(max_attempts)
 
         # Return true if the response starts has true
         if "true" in match_result.lower():

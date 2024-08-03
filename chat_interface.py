@@ -8,7 +8,7 @@ from chat_utils import generate_personal_agent_response, generate_rag_response
 from constants import GREETING_MESSAGE
 from file_utils import remove_all_files_in_folder
 from router_agent import router_agent
-from validation_agent import extract_user_info, get_security_question, validate_security_question
+from validation_agent import extract_user_info, get_security_question, get_security_question_using_id, validate_security_question
 
 def add_message(role, content,audio_file_name=None):
     st.session_state.messages.append({
@@ -75,9 +75,16 @@ def handle_validation_stage_1(prompt):
         
         if st.session_state.validation_attempts < max_attempts:
             remaining_attempts = max_attempts - st.session_state.validation_attempts
-            send_chat_message("assistant", f"Incorrect answer. You have {remaining_attempts} {'attempts' if remaining_attempts > 1 else 'attempt'} left. Please try again.")
+            INCORRECT_ANSWER_AI_RESPONSE =  f"Incorrect answer. You have {remaining_attempts} {'attempts' if remaining_attempts > 1 else 'attempt'} left. Please try again."
+            selected_question, correct_answer = get_security_question_using_id(st.session_state.user_id, st.session_state.user_data)
+            if selected_question and correct_answer:
+                st.session_state.selected_question = selected_question
+                st.session_state.correct_answer = correct_answer
+                security_question =f"Security Question: {selected_question}"
+                INCORRECT_ANSWER_AI_RESPONSE += security_question
+            
+            send_chat_message("assistant",INCORRECT_ANSWER_AI_RESPONSE)
             st.session_state.validation_stage = 1  # Keep in validation stage
-
         else:
             send_chat_message("assistant", "Maximum attempts reached. Validation failed. Please start over with your phone number and first name.")
             st.session_state.validation_stage = 0
