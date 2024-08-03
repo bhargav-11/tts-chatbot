@@ -121,11 +121,11 @@ def render_chat_interface():
     if "prompt_greeting_message" not in st.session_state:
         st.session_state.prompt_greeting_message = False
 
-    col1, col2 = st.columns(2, gap="large")
+    col1, col2 = st.columns([6,1], gap="large")
     with col1:
         clear_button = st.button('Clear')
     with col2:
-        audio = audiorecorder("Start", "Stop")
+        audio = audiorecorder("🎙️", "⏹️")
 
         if len(audio) > 0:
             audio.export("audio.wav", format="wav")
