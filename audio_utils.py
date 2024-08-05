@@ -1,5 +1,5 @@
 from chat_utils import openai_client
-
+import os
 
 def convert_audio_to_text(audio_file_path):
   """
@@ -19,6 +19,9 @@ def convert_audio_to_text(audio_file_path):
   except Exception as e:
     print("Error converting audio to text:", e)
     return None
+  finally:
+     if audio_file_path:
+        os.remove(audio_file_path)
 
 def convert_text_to_audio(text, output_file_path):
     """ 

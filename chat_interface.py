@@ -1,13 +1,14 @@
 import streamlit as st
 import base64
 from audiorecorder import audiorecorder
+from pydub import AudioSegment
 
 from audio_utils import convert_audio_to_text, convert_text_to_audio
 from chat_utils import generate_personal_agent_response, generate_rag_response
 from constants import GREETING_MESSAGE
 from file_utils import remove_all_files_in_folder
 from router_agent import router_agent
-from validation_agent import extract_user_info, get_security_question
+from validation_agent import extract_user_info, get_security_question, get_security_question_using_id, validate_security_question
 
 def add_message(role, content,audio_file_name=None):
     st.session_state.messages.append({
@@ -62,9 +63,9 @@ def handle_validation_stage_1(prompt):
     if 'validation_attempts' not in st.session_state:
         st.session_state.validation_attempts = 0
 
-    max_attempts = 3
+    max_attempts = st.session_state.max_attempts
 
-    if prompt.lower() == st.session_state.correct_answer.lower():
+    if validate_security_question(st.session_state.correct_answer, prompt):
         send_chat_message("assistant", "Thanks for validating your identity. How can I help?")
         st.session_state.is_user_validated = True
         st.session_state.validation_stage = 0
@@ -74,7 +75,15 @@ def handle_validation_stage_1(prompt):
         
         if st.session_state.validation_attempts < max_attempts:
             remaining_attempts = max_attempts - st.session_state.validation_attempts
-            send_chat_message("assistant", f"Incorrect answer. You have {remaining_attempts} {'attempts' if remaining_attempts > 1 else 'attempt'} left. Please try again.")
+            INCORRECT_ANSWER_AI_RESPONSE =  f"Incorrect answer. You have {remaining_attempts} {'attempts' if remaining_attempts > 1 else 'attempt'} left. Please try again."
+            selected_question, correct_answer = get_security_question_using_id(st.session_state.user_id, st.session_state.user_data)
+            if selected_question and correct_answer:
+                st.session_state.selected_question = selected_question
+                st.session_state.correct_answer = correct_answer
+                security_question =f"Security Question: {selected_question}"
+                INCORRECT_ANSWER_AI_RESPONSE += security_question
+            
+            send_chat_message("assistant",INCORRECT_ANSWER_AI_RESPONSE)
             st.session_state.validation_stage = 1  # Keep in validation stage
         else:
             send_chat_message("assistant", "Maximum attempts reached. Validation failed. Please start over with your phone number and first name.")
@@ -120,15 +129,18 @@ def render_chat_interface():
     
     if "prompt_greeting_message" not in st.session_state:
         st.session_state.prompt_greeting_message = False
+    
+    if "max_attempts" not in st.session_state:
+        st.session_state.max_attempts = 3 
 
-    col1, col2 = st.columns(2, gap="large")
+    col1, col2 = st.columns([6,1], gap="large")
     with col1:
         clear_button = st.button('Clear')
     with col2:
-        audio = audiorecorder("Start", "Stop")
+        audio = audiorecorder("🎙️", "⏹️")
 
         if len(audio) > 0:
-            audio.export("audio.wav", format="wav")
+            audio.export("audio.wav", format="wav") 
             transcribed_text = convert_audio_to_text("audio.wav")
             if transcribed_text == st.session_state.transcribed_text:
                 st.session_state.transcribed_text = ""

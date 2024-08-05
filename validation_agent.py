@@ -30,6 +30,29 @@ def extract_user_info(user_input):
 
 # My name is Sofia and phone number is 555-369-2580
 
+def get_security_question_using_id(user_id,user_data):
+    try:
+        user = user_data[(user_data['ID'] ==user_id)]
+        if not user.empty:
+            security_questions = {
+                'What is your mother\'s maiden name?':
+                user['MothersMaidenName'].values[0],
+                'What was the name of your first elementary school?':
+                user['FirstElementarySchoolName'].values[0],
+                'What was the name of your first pet?':
+                user['FirstPetName'].values[0]
+            }
+
+            question = random.choice(list(security_questions.keys()))
+            answer = security_questions[question]
+
+            return question, answer
+        else:
+            return None,None
+    except Exception as e:
+        print("Error getting security question:", e)
+        return None, None
+
 
 def get_security_question(phone_number, first_name, user_data):
     try:
@@ -57,6 +80,48 @@ def get_security_question(phone_number, first_name, user_data):
     except Exception as e:
         print("Error getting security question:", e)
         return None, None,None
+
+def validate_security_question(security_question_correct_answer,user_answer_for_security_question):
+    try:
+        instructions = st.session_state.validation_agent_system_message or "Check if the correct answer and user answer are same or not."
+        prompt = f"""
+        Please follow the given instructions carefully. You will receive both a 
+        correct answer and a user answer. 
+        Your task is to validate the user answer and correct answer based on the provided instructions and
+        return true if they match as per the instructions, or false if they do not.
+
+        Instructions: {instructions}
+        Correct answer: {security_question_correct_answer}
+        User answer: {user_answer_for_security_question}
+
+       Your response should be in the following format:
+        - true or false (indicating whether the answers match according to the instructions)
+        - Max attempts (if mentioned in the instructions), or 'Not specified' if not mentioned.
+
+        Provide the response in a single line, comma-separated:
+        - Example: true, 3
+        - Example: false, Not specified
+        """
+
+        # Call the LLM API
+        response = chat(prompt, use_azure=False)
+        
+        parts = response.split(',')
+        match_result = parts[0].strip()
+        max_attempts = parts[1].strip() if len(parts) > 1 else None
+
+        if max_attempts and max_attempts != 'Not specified' :
+            st.session_state.max_attempts =int(max_attempts)
+
+        # Return true if the response starts has true
+        if "true" in match_result.lower():
+            return True
+        
+        return False
+       
+    except Exception as e:
+        print("Error extracting user information:", e)
+        return security_question_correct_answer.lower() == user_answer_for_security_question
 
 
 def validate_user(user_data):
