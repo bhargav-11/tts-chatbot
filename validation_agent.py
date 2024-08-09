@@ -5,6 +5,45 @@ import streamlit as st
 from chat_utils import chat
 
 
+def extract_custom_user_info(user_input, instructions=st.session_state.validation_agent_system_message, column_keys=None):
+    try:
+        if instructions is None:
+            instructions = "Extract the phone number and first name from the following user input."
+        
+        if column_keys is None:
+            column_keys = ['PhoneNumber', 'FirstName']
+
+        prompt = f"""Follow the instructions provided below :
+        instructions :{instructions} 
+        Extract the information from the following user input given below:
+        User Input : {user_input}
+        Column keys : {column_keys}
+        Provide the answer in the following format: 'column_key: extracted_output_from_user_input, First Name: John'.
+        Example:
+        User Input: "My name is John Doe and my phone number is 1234567890."
+        Columns keys: ["PhoneNumber","FirstName","LastName","MaidensName","ElementarySchool"]
+        Output: "PhoneNumber: 1234567890, FirstName: John, LastName: Doe, MaidensName: no,ElementarySchool: no"
+        """
+
+        response = chat(prompt, use_azure=False)
+
+        if response.lower().startswith("no") or response is None:
+            return None
+
+        extracted_info = response.strip().split(", ")
+        user_info = []
+        for info in extracted_info:
+            key_value = info.split(": ")
+            if len(key_value) == 2:
+                column_key = key_value[0].strip()
+                extracted_output = key_value[1].strip()
+                user_info.append((column_key, extracted_output))
+
+        return user_info
+    except Exception as e:
+        print("Error extracting user information:", e)
+        return None
+
 def extract_user_info(user_input):
     try:
         # Prepare the prompt for the LLM
@@ -52,6 +91,40 @@ def get_security_question_using_id(user_id,user_data):
     except Exception as e:
         print("Error getting security question:", e)
         return None, None
+
+def get_custom_security_question(user_data, user_info_array,security_question_keys):
+    try:
+        query = True
+        for key, value in user_info_array:
+            if key in user_data.columns:
+                if user_data[key].dtype == 'object':
+                    query &= (user_data[key].str.lower() == str(value).lower())
+                else:
+                    query &= (user_data[key] == value)
+        
+        user = user_data[query]
+
+        if not user.empty:
+            security_questions = {}
+            for key in security_question_keys:
+                if key in user.columns:
+                    question = f"What is your {key.lower().replace('_', ' ')}?"
+                    security_questions[question] = user[key].values[0]
+
+            if security_questions:
+                question = random.choice(list(security_questions.keys()))
+                answer = security_questions[question]
+                user_id = user['ID'].values[0]
+                return question, answer, user_id
+            else:
+                print("No valid security questions found.")
+                return None, None, None
+        else:
+            return None, None, None
+
+    except Exception as e:
+        print("Error getting security question:", e)
+        return None, None, None
 
 
 def get_security_question(phone_number, first_name, user_data):
