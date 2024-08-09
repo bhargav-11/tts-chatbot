@@ -133,19 +133,7 @@ def render_chat_interface():
     if "max_attempts" not in st.session_state:
         st.session_state.max_attempts = 3 
 
-    col1, col2 = st.columns([6,1], gap="large")
-    with col1:
-        clear_button = st.button('Clear')
-    with col2:
-        audio = audiorecorder("🎙️", "⏹️")
-
-        if len(audio) > 0:
-            audio.export("audio.wav", format="wav") 
-            transcribed_text = convert_audio_to_text("audio.wav")
-            if transcribed_text == st.session_state.transcribed_text:
-                st.session_state.transcribed_text = ""
-            else:
-                st.session_state.transcribed_text = transcribed_text
+    clear_button = st.button('Clear')
 
     if "messages" not in st.session_state:
         st.session_state.messages = []
@@ -163,18 +151,6 @@ def render_chat_interface():
 
     prompt = st.chat_input("Enter your message:", key="chat_input")
 
-    js = f"""
-        <script>
-            function insertText(dummy_var_to_force_repeat_execution) {{
-                var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
-                var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
-                nativeInputValueSetter.call(chatInput, "{st.session_state.transcribed_text}");
-                var event = new Event('input', {{ bubbles: true}});
-                chatInput.dispatchEvent(event);
-            }}
-            insertText({len(st.session_state.messages)});
-        </script>
-        """
     if not st.session_state.prompt_greeting_message:
         send_chat_message("assistant",GREETING_MESSAGE)
         st.session_state.prompt_greeting_message=True
@@ -199,5 +175,27 @@ def render_chat_interface():
                         handle_validation_stage_1(prompt)
                 else:
                     handle_personal_concierge_agent(prompt)
-        
+
+    audio = audiorecorder("🎙️Start recording", "⏹️Stop recording")
+
+    if len(audio) > 0:
+        audio.export("audio.wav", format="wav") 
+        transcribed_text = convert_audio_to_text("audio.wav")
+        if transcribed_text == st.session_state.transcribed_text:
+            st.session_state.transcribed_text = ""
+        else:
+            st.session_state.transcribed_text = transcribed_text
+
+    js = f"""
+        <script>
+            function insertText(dummy_var_to_force_repeat_execution) {{
+                var chatInput = parent.document.querySelector('textarea[data-testid="stChatInputTextArea"]');
+                var nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, "value").set;
+                nativeInputValueSetter.call(chatInput, "{st.session_state.transcribed_text}");
+                var event = new Event('input', {{ bubbles: true}});
+                chatInput.dispatchEvent(event);
+            }}
+            insertText({len(st.session_state.messages)});
+        </script>
+        """
     st.components.v1.html(js, height=0)
