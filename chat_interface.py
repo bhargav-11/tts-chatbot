@@ -4,7 +4,7 @@ from audiorecorder import audiorecorder
 from pydub import AudioSegment
 
 from audio_utils import convert_audio_to_text, convert_text_to_audio
-from chat_utils import generate_personal_agent_response, generate_rag_response
+from chat_utils import chat, generate_personal_agent_response, generate_rag_response
 from constants import GREETING_MESSAGE
 from file_utils import remove_all_files_in_folder
 from router_agent import router_agent
@@ -38,6 +38,33 @@ def prompt_user_for_data():
 
 def prompt_user_for_phone_and_name():
     send_chat_message("assistant", "Please provide your phone number and first name.")
+
+def custom_prompt_to_user_based_on_instructions():
+    if st.session_state.st.session_state.validation_agent_system_message is None:
+        send_chat_message("assistant", "Please provide your phone number and first name.")
+        return
+    
+    instructions = st.session_state.validation_agent_system_message
+    prompt = f"""Follow the instructions provided below :
+        instructions :{instructions} 
+        Based on the instructions , Provide a simple string as a response which contains the question which needs to be asked as a validation agent.
+        Example:
+        Instructions :
+
+        Your job is to validate the identity of the calling user by asking them for exactly 4 things: first name, last name, phone number, and a random one of three possible security questions (Mother's maiden name, first elementary school name, first pet name). If you can find their record in the supplied users.csv file, then they are a validated user.  If not, they have up to 5 attempts to get this right. 
+
+        You do this by asking the user to identify their first and last name as well as their phone number on file. 
+        You should then look up the first name, last name, and phone number in the attached users.csv file to see if that record exists.  
+        If it does not, see if there are any records that match the first name and last name, but not the phone number. In that case, ask the user to try again with a different phone number.
+        Allow up to 5 attempts to find the first name / last name / phone number combination and if all five attempts fail, offer to put the user through to a live agent.  
+
+        Otherwise, if the record is found, randomly ask the user to supply one of 1. their mother's maiden name, 2. their first elementary school name or 3. their first pet name.  
+        These are security questions. Once the user answers, make sure their answer matches the data stored in users.csv for that first name / last name/ phone number.  
+        If it does, thank the user by first name for identifying themselves and ask what you can do for them. If it does not, appologize and tell them the answer doesn't match, and to please try again. Allow them up to 3 attempts to get the security question correct.  If not, appologize that you cannot authenticate them and ask if they would like to be transferred to a live agent.  
+        Output: Please provide your first name , last name and phone number.
+        """
+    response = chat(prompt, use_azure=False)
+    send_chat_message(response.lower())
 
 def handle_validation_stage_0(prompt):
     if "user_data" not in st.session_state:
